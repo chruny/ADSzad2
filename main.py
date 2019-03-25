@@ -36,28 +36,32 @@ def load_file2():
     return matrix2, number_of_subjects, value_of_subjects, weight_of_subjects
 
 
-def knapsack(W, data, n):
-    K = [[0 for x in range(W + 1)] for x in range(n + 1)]
+def export_to_file(indices, value_of_knapsack):
+    with open('output.txt', 'w') as file:
+        file.write(str(value_of_knapsack) + '\n')
+        file.write(str(len(indices)) + '\n')
+        for index in indices:
+            file.write(str(index) + '\n')
 
-    for i in range(n + 1):
-        for w in range(W + 1):
-            if i == 0 or w == 0:
-                K[i][w] = 0
-            if data[i - 1][3] <= w and data[i - 1][1] <= w:
-                K[i][w] = max(data[i - 1][0] + K[i - 1][w - data[i - 1][3]],
-                              data[i - 1][2] + K[i - 1][w - data[i - 1][1]],
-                              K[i - 1][w])
-            elif data[i - 1][1] <= w < data[i - 1][3]:
-                K[i][w] = max(data[i - 1][0] + K[i - 1][w - data[i - 1][1]], K[i - 1][w])
 
-            elif data[i - 1][3] <= w < data[i - 1][1]:
-                K[i][w] = max(data[i - 1][2] + K[i - 1][w - data[i - 1][3]], K[i - 1][w])
-            else:
-                K[i][w] = K[i - 1][w]
-    return K[n][W]
+def kontrola(arr_index, matrix):
+    value = 0
+    for index in arr_index:
+        for item in matrix:
+            if item.index == index:
+                value += item.value
+    print('Kontrola:', value)
 
-def export_to_file():
-    print()
+
+def get_items(K, matrix2, number_of_items, count_fragile, weight_knapsack):
+    arr_index = []
+    for m in range(number_of_items, 0, -1):
+        if not K[m][weight_knapsack][count_fragile] == K[m - 1][weight_knapsack][count_fragile]:
+            weight_knapsack = weight_knapsack - matrix2[m - 1].weight
+            count_fragile = count_fragile - matrix2[m - 1].fragile
+            arr_index.append(m - 1)
+    return sorted(arr_index)
+
 
 def knapsack_ads_zad2(matrix, number_of_items, count_fragile, weight_knapsack, start_time):
     K = [[[0 for k in range(count_fragile + 1)] for j in range(weight_knapsack + 1)] for i in
@@ -75,18 +79,20 @@ def knapsack_ads_zad2(matrix, number_of_items, count_fragile, weight_knapsack, s
 
                 else:
                     values = (K[l - 1][m][n],
-                                     K[l - 1][m - matrix[l - 1].weight][n - matrix[l - 1].fragile] + matrix[
-                                         l - 1].value)
+                              K[l - 1][m - matrix[l - 1].weight][n - matrix[l - 1].fragile] + matrix[
+                                  l - 1].value)
 
                     K[l][m][n] = max(values)
-                    index = values.index(max(values))
-                    print()
-
-    return K[len(K) - 1][len(K[0]) - 1][len(K[0][0]) - 1]
+    return K[len(K) - 1][len(K[0]) - 1][len(K[0][0]) - 1], K
 
 
 matrix, number_of_subjects, value_of_subjects, weight_of_subjects = load_file2()
 
 start_time = time.time()
-print(knapsack_ads_zad2(matrix, number_of_subjects, value_of_subjects, weight_of_subjects, start_time))
+value, K = knapsack_ads_zad2(matrix, number_of_subjects, value_of_subjects, weight_of_subjects, start_time)
+print(value)
+
+arr_index = get_items(K, matrix, number_of_subjects, value_of_subjects, weight_of_subjects)
+print(arr_index)
+export_to_file(arr_index, value)
 print("--- %s seconds ---" % (time.time() - start_time))
